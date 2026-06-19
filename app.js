@@ -2,8 +2,10 @@ if(process.env.NODE_ENV != "production"){
   require('dotenv').config();
 };
 
+
 const express = require("express");
 const app = express();
+app.use(express.json());
 const mongoose = require("mongoose");
 const Listing = require("./models/listing.js");
 const path = require("path");
@@ -29,11 +31,18 @@ const User = require("./models/user.js");
 
 const multer  = require('multer')
 const upload = multer({ dest: 'uploads/' })
+const { GoogleGenerativeAI } =
+require("@google/generative-ai");
 
 
 
 // const MONGO_URL = "mongodb://127.0.0.1:27017/wanderLust";
 const dbUrl = process.env.ATLASDB_URL;
+
+//Gemini AI Client
+const genAI = new GoogleGenerativeAI(
+  process.env.GEMINI_API_KEY
+);
 
 
 main()
@@ -127,7 +136,36 @@ app.use("/listings/:id/reviews", reviewsRouter);
 app.use("/listings", listingsRouter);
 app.use("/", userRouter);
 
+//Gemini Ai
+app.post("/chat", async (req, res) => {
 
+  try {
+
+    const userMessage = req.body.message;
+
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+    });
+
+    const result =
+      await model.generateContent(userMessage);
+
+    const reply =
+      result.response.text();
+
+    res.json({
+      reply: reply,
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      reply: "Something went wrong",
+    });
+  }
+});
 
 
 app.use((req, res, next) => {
@@ -141,6 +179,7 @@ app.use((err, req, res, next) => {
 
   res.status(statusCode).render("error.ejs", { message });
 });
+
 
 app.listen(8080, () => {
   console.log("server is listening to port 8080");

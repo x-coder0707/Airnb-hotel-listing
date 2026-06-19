@@ -24,16 +24,18 @@
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
       rel="stylesheet"
     />
-    <link href="https://api.mapbox.com/mapbox-gl-js/v3.23.1/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.23.1/mapbox-gl.js"></script>
-    <link rel="stylesheet" href="/css/rating.css">
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v3.23.1/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.23.1/mapbox-gl.js"></script>
+    <link rel="stylesheet" href="/css/rating.css" />
   </head>
   <body>
     <%- include("../includes/navbar.ejs") %>
     <div class="container">
       <%- include("../includes/flash.ejs") %><%- body %>
     </div>
-
 
     <%- include("../includes/footer.ejs") %>
     <script
@@ -42,5 +44,113 @@
       crossorigin="anonymous"
     ></script>
     <script src="/js/script.js"></script>
+
+   <div class="chatbot-wrapper">
+
+  <!-- Floating Circle Button -->
+  <button class="chat-toggle" id="chatToggle">
+    <i class="fa-solid fa-comments"></i>
+  </button>
+
+  <!-- Chatbot -->
+  <div class="chatbot-container" id="chatbot">
+
+    <div class="chat-header">
+      <div>
+        <i class="fa-solid fa-robot"></i>
+        Hotel Assistant
+      </div>
+
+      <button class="close-chat" id="closeChat">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div id="messages" class="chat-messages"></div>
+
+    <div class="chat-input-area">
+      <input
+        type="text"
+        id="message"
+        placeholder="Ask about hotels..."
+      />
+
+      <button onclick="sendMessage()">
+        <i class="fa-solid fa-paper-plane"></i>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+   <script>
+  const chatToggle = document.getElementById("chatToggle");
+  const chatbot = document.getElementById("chatbot");
+  const closeChat = document.getElementById("closeChat");
+
+  chatToggle.addEventListener("click", () => {
+    chatbot.classList.toggle("active");
+  });
+
+  closeChat.addEventListener("click", () => {
+    chatbot.classList.remove("active");
+  });
+
+  async function sendMessage() {
+
+    const input = document.getElementById("message");
+
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    const messages = document.getElementById("messages");
+
+    // User Message
+    messages.innerHTML += `
+      <div class="user-message">
+        ${message}
+      </div>
+    `;
+
+    input.value = "";
+
+    messages.scrollTop = messages.scrollHeight;
+
+    try {
+
+      const response = await fetch("/chat", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          message: message,
+        }),
+      });
+
+      const data = await response.json();
+
+      // Bot Message
+      messages.innerHTML += `
+        <div class="bot-message">
+          ${data.reply}
+        </div>
+      `;
+
+      messages.scrollTop = messages.scrollHeight;
+
+    } catch (err) {
+
+      messages.innerHTML += `
+        <div class="bot-message">
+          Error connecting to AI.
+        </div>
+      `;
+    }
+  }
+</script>
   </body>
 </html>
